@@ -48,6 +48,22 @@ func (re *Response) Created(entity interface{}) {
 	re.writeHeaderAndEntity()
 }
 
+//Delete 204 return
+func (re *Response) Delete(entity interface{}) {
+	re.body.Data = entity
+	re.httpStatus = 204
+	re.body.APIError = apierrors.DefaulAPIError
+	re.writeHeaderAndEntity()
+}
+
+//Update 204 return
+func (re *Response) Update(entity interface{}) {
+	re.body.Data = entity
+	re.httpStatus = 204
+	re.body.APIError = apierrors.DefaulAPIError
+	re.writeHeaderAndEntity()
+}
+
 //Error error response
 func (re *Response) Error(status int, err *apierrors.APIError) {
 	re.body.APIError = err
