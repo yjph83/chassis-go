@@ -24,7 +24,7 @@ type Pagination struct {
 }
 
 //NewPage new page
-func newPage(data interface{}, index, size, count uint) *Page {
+func NewPage(data interface{}, index, size, count uint) *Page {
 	var pages uint
 	if count%size == 0 {
 		pages = count / size
@@ -49,9 +49,29 @@ func NewPagination(db *gorm.DB, model interface{}, pageIndex, pageSize uint) *Pa
 		db.Limit(pageSize).
 			Offset(pageIndex * pageSize).
 			Find(model)
-		return newPage(model, pageIndex, pageSize, count)
+		return NewPage(model, pageIndex, pageSize, count)
 	}
 	return nil
+}
+
+//paginationQuery pagination query
+func PaginationQuery(db *gorm.DB, model interface{}, pageIndex, pageSize uint, countFlag bool) (*Page, error) {
+	var count uint
+	if countFlag {
+		db.Where("deleted_at is null").Count(&count)
+	} else {
+		db.Count(&count)
+	}
+	var err error
+	if count > 0 { //&& count > pageIndex*pageSize
+		if countFlag {
+			err = db.Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(model).Error
+		} else {
+			err = db.Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(model).Unscoped().Error
+		}
+		return NewPage(model, pageIndex, pageSize, count), err
+	}
+	return nil, err
 }
 
 //SampleBaseDO model with id pk
