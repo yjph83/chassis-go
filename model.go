@@ -54,24 +54,34 @@ func NewPagination(db *gorm.DB, model interface{}, pageIndex, pageSize uint) *Pa
 	return nil
 }
 
-//paginationQuery pagination query
-func PaginationQuery(db *gorm.DB, model interface{}, pageIndex, pageSize uint, countFlag bool) (*Page, error) {
+//paginationQuery pagination query。 pageIndex 必须从 1 开始， 如果从0 开始则必须 将 (pageIndex - 1) 换成 pageIndex
+func PaginationQuery(db *gorm.DB, model interface{}, pageIndex, pageSize uint) (*Page, error) {
 	var count uint
-	if countFlag {
-		db.Where("deleted_at is null").Count(&count)
-	} else {
-		db.Count(&count)
-	}
+	db.Count(&count)
 	var err error
-	if count > 0 { //&& count > pageIndex*pageSize
-		if countFlag {
-			err = db.Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(model).Error
-		} else {
-			err = db.Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(model).Unscoped().Error
-		}
-		return NewPage(model, pageIndex, pageSize, count), err
+	if count > 0 && count > (pageIndex - 1)*pageSize{
+		err = db.Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(model).Error
+		return NewPageInfo(model, pageIndex, pageSize, count), err
 	}
 	return nil, err
+}
+
+//NewPage new Chassis.page
+func NewPageInfo(data interface{}, index, size, count uint) *Page {
+	var pages uint
+	if count%size == 0 {
+		pages = count / size
+	} else {
+		pages = count/size + 1
+	}
+	return &Page{
+		List:   data,
+		Total:  count,
+		Size:   size,
+		Offset: (index - 1) * size,
+		Index:  index,
+		Pages:  pages,
+	}
 }
 
 //SampleBaseDO model with id pk
