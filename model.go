@@ -54,13 +54,13 @@ func NewPagination(db *gorm.DB, model interface{}, pageIndex, pageSize uint) *Pa
 	return nil
 }
 
-//paginationQuery pagination query。 pageIndex 必须从 1 开始， 如果从0 开始则必须 将 (pageIndex - 1) 换成 pageIndex
+//paginationQuery pagination query。 pageIndex 必须从 1 开始，必须将 pageIndex 换成 (pageIndex - 1)
 func PaginationQuery(db *gorm.DB, model interface{}, pageIndex, pageSize uint) (*Page, error) {
 	var count uint
 	db.Count(&count)
 	var err error
-	if count > 0 && count > (pageIndex - 1)*pageSize{
-		err = db.Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(model).Error
+	if count > 0 && count > (pageIndex)*pageSize{
+		err = db.Limit(pageSize).Offset(pageIndex * pageSize).Find(model).Error
 		return NewPageInfo(model, pageIndex, pageSize, count), err
 	}
 	return nil, err
@@ -78,7 +78,7 @@ func NewPageInfo(data interface{}, index, size, count uint) *Page {
 		List:   data,
 		Total:  count,
 		Size:   size,
-		Offset: (index - 1) * size,
+		Offset: index * size,
 		Index:  index,
 		Pages:  pages,
 	}
